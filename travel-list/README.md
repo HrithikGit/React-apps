@@ -24,3 +24,7 @@
 4.  **Sorting and clearing**: Use the "Sort" button to organize items by the order they were added, and click "Clear List" to remove all items.
 
 This app is a great example of how React's state management can be used to create a dynamic and interactive user interface. The use of useState allows for granular control over different aspects of the app, from tracking individual items to updating packing progress in real time.
+
+## Screenshot
+
+[!img(![App Screenshot](image.png))]
