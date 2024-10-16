@@ -1,15 +1,5 @@
-import { useState, useEffect } from "react";
-const initialFriends = [
-  {
-    id: 118836,
-    name: "Hrithik",
-    image: "https://i.pravatar.cc/48?u=118836",
-    desc: "Hello",
-    balance: 0,
-    played: true,
-    finalAmount: 0,
-  },
-];
+import { useState, useEffect, Fragment } from "react";
+const initialFriends = JSON.parse(localStorage.getItem("friendsList"));
 
 export default function App() {
   const [friends, setFriends] = useState(initialFriends);
@@ -46,7 +36,8 @@ export default function App() {
     console.log(ratio);
     friendsCopy = friendsCopy.map((friend) => ({
       ...friend, // Keep the rest of the friend's properties intact
-      balance: parseInt(friend.balance) / ratio - cost, // Update the balance
+      desc: "",
+      finalAmount: parseInt(friend.balance) / ratio - cost, // Update the balance
     }));
 
     friendsCopy = friendsCopy.sort((a, b) => b.balance - a.balance);
@@ -55,34 +46,59 @@ export default function App() {
       end = friendsCopy.length - 1;
 
     while (start < end) {
-      let firstBalance = friendsCopy[start].balance.toFixed(2);
-      let lastBalance = Math.abs(friendsCopy[end].balance).toFixed(2);
-      console.log(firstBalance + " " + lastBalance);
+      let firstBalance = friendsCopy[start].finalAmount.toFixed(2);
+      let lastBalance = Math.abs(friendsCopy[end].finalAmount).toFixed(2);
+
       if (firstBalance >= lastBalance) {
         firstBalance -= lastBalance;
-        friendsCopy[end].desc = `You owe ${friendsCopy[start].name} ${Math.abs(
+        friendsCopy[end].desc = getText(
+          friendsCopy[end].desc,
+          friendsCopy[start].name,
           lastBalance
-        )}$`;
-        friendsCopy[start].desc = `You will recieve ${Math.abs(
-          lastBalance
-        )}$ from ${friendsCopy[end].name}`;
-        friendsCopy[start].balance = firstBalance;
+        );
+        friendsCopy[start].desc = getText(
+          friendsCopy[start].desc,
+          friendsCopy[end].name,
+          lastBalance,
+          false
+        );
+        friendsCopy[start].finalAmount = firstBalance;
         end--;
       } else {
         lastBalance -= firstBalance;
-        friendsCopy[end].desc = `You owe ${friendsCopy[start].name} ${Math.abs(
+
+        friendsCopy[end].desc = getText(
+          friendsCopy[end].desc,
+          friendsCopy[start].name,
           firstBalance
-        )}$`;
-        friendsCopy[start].desc = `You will recieve ${Math.abs(
-          firstBalance
-        )}$ from ${friendsCopy[end].name}`;
-        friendsCopy[end].balance = lastBalance;
+        );
+
+        friendsCopy[start].desc = getText(
+          friendsCopy[start].desc,
+          friendsCopy[end].name,
+          firstBalance,
+          false
+        );
+
+        friendsCopy[end].finalAmount = lastBalance;
         start++;
       }
     }
 
-    friendsCopy = friendsCopy.map((friend) => ({ ...friend, balance: 0 }));
+    // friendsCopy = friendsCopy.map((friend) => ({ ...friend, balance: 0 }));
     setFriends(friendsCopy);
+    localStorage.setItem("friendsList", JSON.stringify(friendsCopy));
+  }
+
+  function getText(curr, name, amount, owe = true) {
+    if (owe)
+      return curr.length == 0
+        ? `You owe ${name} ${Math.abs(amount)}$`
+        : curr + `, ${name} ${Math.abs(amount)}$`;
+    else
+      return curr.length == 0
+        ? `You will recieve ${Math.abs(amount)}$ from ${name}`
+        : curr + `, ${Math.abs(amount)}$ from ${name}`;
   }
 
   function handleAddFriend(e, name, image, setName, setImage) {
@@ -241,7 +257,7 @@ function PokerForm({ friends, handleBalances }) {
       {friendsCopy.map(
         (friend) =>
           friend.played && (
-            <>
+            <Fragment key={friend.id}>
               <label> - {friend.name} final coins</label>
               <input
                 type="text"
@@ -250,7 +266,7 @@ function PokerForm({ friends, handleBalances }) {
                   updateFriendAmount(e, e.target.value, friend.id)
                 }
               />
-            </>
+            </Fragment>
           )
       )}
       <Button onClick={(e) => handleBalances(e, friendsCopy, coins, cost)}>
